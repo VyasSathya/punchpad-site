@@ -4,29 +4,149 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Punchpad: Comedy Notebook</title>
-<meta name="description" content="Record your set, find your bits and your laughs, and find mics near you.">
+<meta name="description" content="For stand-up comics. Record your set and see your bits and where the laughs landed. Find open mics and get on the list.">
+<meta property="og:title" content="Punchpad: Comedy Notebook">
+<meta property="og:description" content="Record your set and see where the laughs landed. Find a mic tonight.">
+<meta property="og:url" content="https://punchpad.lol/">
+<meta name="theme-color" content="#fafafa" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0e0e0e" media="(prefers-color-scheme: dark)">
+<!-- When the app is live, add the Smart App Banner: <meta name="apple-itunes-app" content="app-id=APP_ID"> -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css">
 <style>
-:root{--bg:#fafafa;--fg:#0a0a0a;--mfg:#6b6b6b;--faint:#9e9e9e;--glove:#ef8128}
-@media (prefers-color-scheme:dark){:root{--bg:#0e0e0e;--fg:#f4f4f4;--mfg:#a3a3a3;--faint:#6e6e6e}}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--fg);font:17px/1.5 Geist,system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
-main{min-height:100vh;max-width:560px;margin:0 auto;padding:16vh 20px 40px;display:flex;flex-direction:column;gap:18px}
-.mark{width:44px;height:44px;border-radius:12px;background:var(--glove)}
-h1{font-size:40px;font-weight:700;letter-spacing:-1.2px;line-height:1.05;margin:0}
-p{margin:0;color:var(--mfg)}
-footer{margin-top:auto;color:var(--faint);font-size:14px}
-footer a{color:var(--faint)}
+.hero{padding:88px 0 0;text-align:center}
+.hero h1{font-size:76px;font-weight:700;letter-spacing:-3px;line-height:1;margin:0}
+.hero h1 em{font-style:normal;color:var(--glove)}
+.hero .sub{font-size:20px;color:var(--mfg);max-width:560px;margin:22px auto 0;line-height:1.45}
+.cta{display:inline-flex;align-items:center;gap:10px;height:52px;padding:0 24px;margin-top:34px;border-radius:14px;font-weight:600;font-size:17px;text-decoration:none}
+.cta.soon{border:1px solid var(--border);color:var(--fg);background:var(--card)}
+.cta.live{background:var(--fg);color:var(--bg)}
+.cta svg{width:18px;height:18px;flex:none}
+
+.set{margin:80px auto 0;max-width:960px}
+.set .wave{display:flex;align-items:center;gap:3px;height:132px}
+.set .bit{display:flex;align-items:center;gap:3px;height:100%;min-width:0}
+.set .bit + .bit{margin-left:10px}
+.set i{display:block;flex:1 1 0;min-width:1px;border-radius:2px;background:var(--wave)}
+.set i.l{background:var(--glove)}
+.set .axis{display:flex;justify-content:space-between;color:var(--faint);font-size:13px;font-variant-numeric:tabular-nums;margin-top:14px;border-top:1px solid var(--border);padding-top:10px}
+
+.features{margin-top:120px}
+.row{display:grid;grid-template-columns:5fr 7fr;gap:48px;padding:44px 0;border-top:1px solid var(--border)}
+.row:last-child{border-bottom:1px solid var(--border)}
+.hero h1,.hero .sub,.row h2,.row p,.close h2{text-wrap:balance}
+.row h2{font-size:30px;font-weight:650;letter-spacing:-.8px;line-height:1.15;margin:0}
+.row p{margin:0;color:var(--mfg);font-size:18px;max-width:520px}
+.row .k{display:block;font-size:13px;font-weight:600;color:var(--glove);letter-spacing:.2px;margin-bottom:10px}
+
+.close{text-align:center;padding-top:120px}
+.close h2{font-size:44px;font-weight:700;letter-spacing:-1.4px;line-height:1.05;margin:0}
+
+@media (max-width:760px){
+  .hero{padding-top:48px}
+  .hero h1{font-size:48px;letter-spacing:-1.8px}
+  .hero .sub{font-size:18px}
+  .set{margin-top:56px}
+  .set .wave{height:96px;gap:2px}
+  .set .bit{gap:2px}
+  .set .bit + .bit{margin-left:6px}
+
+  .features{margin-top:72px}
+  .row{grid-template-columns:1fr;gap:12px;padding:32px 0}
+  .row h2{font-size:26px}
+  .row p{font-size:17px}
+  .close{padding-top:80px}
+  .close h2{font-size:34px}
+}
 </style>
 </head>
 <body>
-<main>
-  <div class="mark"></div>
-  <h1>Punchpad</h1>
-  <p>The comedy notebook. Record your set, see your bits and where the laughs landed, and find mics near you.</p>
-  <p>Coming to iPhone.</p>
-  <footer>Punchpad</footer>
+<header class="wrap top">
+  <a class="brand" href="/"><span class="mark"></span>Punchpad</a>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <h1>The comedy<br><em>notebook.</em></h1>
+    <p class="sub">For stand-up comics. Record your set and see your bits and where the laughs landed. Find a mic tonight and get on the list.</p>
+    <a class="cta soon" data-cta>Coming to iPhone</a>
+  </section>
+
+  <div class="set" aria-hidden="true">
+    <div class="wave" id="wave"></div>
+    <div class="axis"><span>0:00</span><span>1:00</span><span>2:00</span><span>3:00</span><span>4:00</span><span>5:00</span></div>
+  </div>
+
+  <section class="features">
+    <div class="row">
+      <h2><span class="k">Record</span>Record the set. See where it hit.</h2>
+      <p>Hit record when you go up. Punchpad writes out the set, splits it into your bits and marks where the laughs landed, so you can see which lines worked.</p>
+    </div>
+    <div class="row">
+      <h2><span class="k">Mics</span>Find a mic tonight.</h2>
+      <p>1,039 open mics in 171 scenes, with the day, the time and how to sign up.</p>
+    </div>
+    <div class="row">
+      <h2><span class="k">Sign-up sheets</span>Run the list.</h2>
+      <p>Hosts run the sign-up sheet in the app. Comics without the app get on it from a link or the QR code at the door.</p>
+    </div>
+    <div class="row">
+      <h2><span class="k">Friends</span>Notes from comics you trust.</h2>
+      <p>Add your friends, chat, and send a tape. They play it right in the chat and send you notes.</p>
+    </div>
+  </section>
+
+  <section class="close">
+    <h2>Punchpad:<br>Comedy Notebook</h2>
+    <a class="cta soon" data-cta>Coming to iPhone</a>
+  </section>
 </main>
+
+<footer class="bottom">
+  <div class="wrap">
+    <span>Punchpad</span>
+    <a href="/privacy/">Privacy</a>
+    <a href="/terms/">Terms</a>
+  </div>
+</footer>
+
+<script>
+// The App Store link. Empty until Punchpad is live on the App Store; set it to the app's
+// apps.apple.com URL and every call to action becomes a download link.
+const APP_STORE_URL = '';
+
+if (APP_STORE_URL) {
+  for (const a of document.querySelectorAll('[data-cta]')) {
+    a.href = APP_STORE_URL;
+    a.className = 'cta live';
+    a.innerHTML = '<svg viewBox="0 0 384 512" fill="currentColor" aria-hidden="true"><path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/></svg>Download on the App Store';
+  }
+}
+
+// The set drawn as a waveform: bits separated by gaps, the laughs in the accent.
+// A drawing of what the app shows, not anyone's recording.
+(function () {
+  const wave = document.getElementById('wave');
+  const narrow = matchMedia('(max-width:760px)').matches;
+  const bits = narrow ? [14, 18, 11, 16] : [26, 34, 20, 30, 24];
+  let seed = 7;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for (const len of bits) {
+    const bit = document.createElement('div');
+    bit.className = 'bit';
+    bit.style.flex = String(len);
+    for (let k = 0; k < len; k++) {
+      const i = document.createElement('i');
+      const laugh = k > len * 0.55 && rnd() > 0.55;
+      const h = laugh ? 62 + rnd() * 38 : 14 + rnd() * 40;
+      i.style.height = h + '%';
+      if (laugh) i.className = 'l';
+      bit.appendChild(i);
+    }
+    wave.appendChild(bit);
+  }
+})();
+</script>
 </body>
 </html>
