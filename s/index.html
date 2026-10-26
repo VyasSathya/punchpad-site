@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sign up</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- The open sheet (supabase/migrations/20261025070000_spark_set_open_sheet.sql): a mic's next sheet for comics without
+     the app. ?m=<the mic's code>. Signs up by name; a random key kept in this browser lets them see and drop their spot.
+     The public key below is the same one the app ships with; the database functions decide everything. -->
+<style>
+:root{--bg:#fafafa;--card:#fff;--fg:#0a0a0a;--mfg:#6b6b6b;--faint:#9e9e9e;--border:#e3e3e3;--muted:#f1f1f1;--glove:#ef8128;--red:#d1453b}
+@media (prefers-color-scheme:dark){:root{--bg:#0e0e0e;--card:#171717;--fg:#f4f4f4;--mfg:#a3a3a3;--faint:#6e6e6e;--border:#2c2c2c;--muted:#262626;--red:#ef6b62}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.45 Geist,system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+main{max-width:460px;margin:0 auto;padding:28px 16px calc(40px + env(safe-area-inset-bottom))}
+h1{font-size:28px;font-weight:700;letter-spacing:-.6px;margin:0;line-height:1.15}
+.sub{color:var(--mfg);margin:6px 0 0}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-top:20px}
+.label{font-size:13px;font-weight:600;color:var(--mfg);margin:0 0 8px}
+input{width:100%;font:inherit;font-size:17px;color:var(--fg);background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:13px 14px;outline:none}
+input:focus{border-color:var(--fg)}
+.slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:8px;margin-top:4px}
+.slot{height:48px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--fg);font:500 16px Geist,system-ui,sans-serif;cursor:pointer}
+.slot[disabled]{color:var(--faint);background:var(--muted);border-color:transparent;cursor:default;text-decoration:line-through}
+.slot.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.slot.held{text-decoration:none}
+button.main{width:100%;height:52px;margin-top:16px;border:0;border-radius:14px;background:var(--glove);color:#fff;font:600 17px Geist,system-ui,sans-serif;cursor:pointer}
+button.main[disabled]{opacity:.45;cursor:default}
+button.quiet{background:none;border:0;color:var(--mfg);font:500 15px Geist,system-ui,sans-serif;padding:12px 0 0;cursor:pointer;text-decoration:underline}
+.err{color:var(--red);font-size:14px;margin:10px 0 0}
+.big{font-size:44px;font-weight:700;letter-spacing:-1px;line-height:1}
+.note{color:var(--mfg);font-size:15px;margin:0}
+.foot{color:var(--faint);font-size:13px;text-align:center;margin-top:28px}
+.skeleton{height:18px;border-radius:6px;background:var(--muted);margin:10px 0;animation:b 1.4s ease-in-out infinite}
+@keyframes b{50%{opacity:.5}}
+</style>
+</head>
+<body>
+<main id="app"><div class="skeleton" style="width:70%;height:28px"></div><div class="skeleton" style="width:45%"></div><div class="skeleton" style="height:180px;border-radius:16px;margin-top:20px"></div></main>
+<script>
+const URL_ = 'https://ihmayqzxqyednchbezya.supabase.co';
+const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlobWF5cXp4cXllZG5jaGJlenlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgxNzcyOTgsImV4cCI6MjA4Mzc1MzI5OH0._xhGhkqoy7AMm7M5dxSHXM_yeP8zVAJG-BaGMICtHFo';
+const code = (new URLSearchParams(location.search).get('m') || location.hash.slice(1) || '').trim().toLowerCase();
+const app = document.getElementById('app');
+
+// this browser's key: kept so a comic sees and drops their own spot; a private window just gets a fresh one
+let guest = null;
+try { guest = localStorage.getItem('punchpad.guest'); } catch (e) {}
+if (!guest) {
+  const b = new Uint8Array(18); crypto.getRandomValues(b);
+  guest = 'g_' + Array.from(b, x => x.toString(16).padStart(2, '0')).join('');
+  try { localStorage.setItem('punchpad.guest', guest); } catch (e) {}
+}
+let savedName = '';
+try { savedName = localStorage.getItem('punchpad.name') || ''; } catch (e) {}
+
+let state = null, picked = null, busy = false, error = '';
+
+async function rpc(fn, args) {
+  let r;
+  try {
+    r = await fetch(`${URL_}/rest/v1/rpc/${fn}`, { method: 'POST', headers: { apikey: KEY, Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json' }, body: JSON.stringify(args) });
+  } catch (e) { throw new Error('No connection. Try again when you have signal.'); }
+  const body = await r.json().catch(() => null);
+  if (!r.ok) {
+    const m = (body && body.message) || '';
+    // the database's own reasons are written for comics; anything else is said plainly
+    throw new Error(/^[a-z][a-z ,':0-9-]{3,90}$/i.test(m) && !/function|relation|column|permission/i.test(m) ? m[0].toUpperCase() + m.slice(1) + '.' : 'Something went wrong. Try again.');
+  }
+  return body;
+}
+
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+function when(iso) {
+  const d = new Date(iso); if (isNaN(d)) return '';
+  const today = new Date(); const tomorrow = new Date(); tomorrow.setDate(today.getDate() + 1);
+  const same = (a, b) => a.toDateString() === b.toDateString();
+  const day = same(d, today) ? 'Tonight' : same(d, tomorrow) ? 'Tomorrow' : d.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
+  return `${day}, ${d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}`;
+}
+
+async function load() {
+  if (!code) { render(); return; }
+  try { state = await rpc('spark_set_public_sheet', { p_code: code, p_key: guest }); error = ''; }
+  catch (e) { if (!state) error = e.message; }
+  render();
+}
+
+async function act(fn, args) {
+  if (busy) return;
+  busy = true; error = ''; render();
+  try { state = await rpc(fn, args); picked = null; }
+  catch (e) { error = e.message; load(); }
+  busy = false; render();
+}
+
+function render() {
+  if (!code) { app.innerHTML = `<h1>Sign up</h1><p class="sub">This link is missing the mic. Ask the host for the QR code.</p>`; return; }
+  if (!state) { app.innerHTML = error ? `<h1>Sign up</h1><p class="err">${esc(error)}</p><button class="quiet" onclick="load()">Try again</button>` : app.innerHTML; return; }
+  const m = state.mic, s = state.sheet, me = state.me;
+  document.title = m.title || 'Sign up';
+  let html = `<h1>${esc(m.title)}</h1><p class="sub">${esc([m.venue, s ? when(s.starts_at) : ''].filter(Boolean).join(' · '))}</p>`;
+  if (!s) {
+    html += `<div class="card"><p class="note">No sheet is up for this mic yet. Check back closer to the night.</p></div>`;
+  } else if (me) {
+    html += `<div class="card"><p class="label">You're on the list</p><div class="big">${me.position}</div><p class="note" style="margin-top:8px">${esc(me.name)}${s.set_minutes ? ` · ${s.set_minutes} min` : ''}</p>
+      <button class="quiet" ${busy ? 'disabled' : ''} onclick="if(confirm('Give up your spot?'))act('spark_set_public_drop',{p_code:code,p_key:guest})">Drop my spot</button></div>`;
+  } else if (s.signup_mode === 'bucket') {
+    html += `<div class="card"><p class="note">Names are drawn from the bucket at the mic. Just show up.</p></div>`;
+  } else if (s.signup_mode === 'lottery') {
+    html += `<div class="card"><p class="note">This mic runs a draw in the Punchpad app.</p></div>`;
+  } else if (!state.guests_allowed) {
+    html += `<div class="card"><p class="note">This mic takes signups in the Punchpad app.</p></div>`;
+  } else if (s.status !== 'open') {
+    html += `<div class="card"><p class="note">The sheet is closed.</p></div>`;
+  } else if (s.opens_at && new Date(s.opens_at) > new Date()) {
+    html += `<div class="card"><p class="note">Signup opens ${esc(when(s.opens_at))}.</p></div>`;
+  } else if (!s.open) {
+    html += `<div class="card"><p class="note">The sheet is full.${s.walk_up ? ` There ${s.walk_up === 1 ? 'is 1 walk-up spot' : `are ${s.walk_up} walk-up spots`} at the door.` : ''}</p></div>`;
+  } else {
+    const pick = s.signup_mode === 'pick';
+    html += `<div class="card">
+      <p class="label">Your name</p>
+      <input id="name" autocomplete="name" maxlength="40" placeholder="Name you go by on stage" value="${esc(savedName)}">
+      ${pick ? `<p class="label" style="margin-top:16px">Pick a spot</p><div class="slots">${state.slots.map(x =>
+        `<button class="slot ${picked === x.position ? 'on' : ''} ${x.kind !== 'online' ? 'held' : ''}" ${x.open && !busy ? '' : 'disabled'} onclick="picked=${x.position};render();keep()">${x.kind === 'walk_up' && !x.taken ? 'door' : x.position}</button>`).join('')}</div>`
+        : `<p class="note" style="margin-top:12px">${s.open} ${s.open === 1 ? 'spot' : 'spots'} left, first come first served.</p>`}
+      <button class="main" ${busy || (pick && !picked) ? 'disabled' : ''} onclick="signUp()">${busy ? 'Signing up...' : pick && picked ? `Take spot ${picked}` : pick ? 'Pick a spot' : 'Sign up'}</button>
+      ${error ? `<p class="err">${esc(error)}</p>` : ''}
+    </div>`;
+    if (s.rules) html += `<div class="card"><p class="label">From the host</p><p class="note">${esc(s.rules)}</p></div>`;
+  }
+  if (me && error) html += `<p class="err">${esc(error)}</p>`;
+  html += `<p class="foot">Record your set and see your laughs with Punchpad for iPhone.</p>`;
+  const typed = document.getElementById('name')?.value;
+  app.innerHTML = html;
+  if (typed !== undefined && document.getElementById('name')) document.getElementById('name').value = typed;
+}
+function keep() { const v = document.getElementById('name')?.value; if (v !== undefined) savedName = v; }
+function signUp() {
+  const name = (document.getElementById('name')?.value || '').trim();
+  if (!name) { error = 'Put your name in first.'; render(); return; }
+  savedName = name; try { localStorage.setItem('punchpad.name', name); } catch (e) {}
+  act('spark_set_public_signup', { p_code: code, p_name: name, p_key: guest, p_position: picked });
+}
+document.addEventListener('input', e => { if (e.target.id === 'name') savedName = e.target.value; });
+
+load();
+// the list moves while people sign up; quietly check again while the page is open
+setInterval(() => { if (!busy && document.visibilityState === 'visible' && document.activeElement?.id !== 'name') load(); }, 20000);
+</script>
+</body>
+</html>
